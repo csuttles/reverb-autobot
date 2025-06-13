@@ -9,7 +9,7 @@ python = "^3.12"
 requests = "^2.31.0"
 toml = "^0.10.2"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 ipython = "^8.22.2"
 isort = "^5.13.2"
 black = "^24.3.0"
@@ -22,7 +22,7 @@ mypy = "^1.9.0"
 profile = "black"
 
 [tool.reverb_inventory_tool]
-api_token = "YOUR_REVERB_API_TOKEN" # Replace with your Reverb Personal Access Token
+api_token = "5088fe5e45f1994fc6658c175686d30707a9d8d39e86eab1e967ccff9bcf6919" # Replace with your Reverb Personal Access Token
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
