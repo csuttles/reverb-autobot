@@ -1,10 +1,13 @@
 """
 Unit tests for the Reverb inventory management tool.
 """
-
+import argparse
+import csv
 import json
 import pytest
-from unittest.mock import MagicMock, patch
+import requests
+from unittest.mock import MagicMock
+
 from requests.exceptions import HTTPError
 
 # Import functions and classes from the main script
@@ -39,7 +42,7 @@ def test_make_request_success(mocker, api_instance):
     endpoint = "my/listings"
     result = api_instance._make_request("GET", endpoint)
 
-    # Check that requests.request was called correctly
+    # Check that requests.request was called correctly with the proper URL
     requests.request.assert_called_once_with(
         "GET",
         f"https://api.reverb.com/api/{endpoint}",
@@ -72,7 +75,7 @@ def test_read_json_success(tmp_path):
 
 def test_read_json_not_found():
     """Test reading a non-existent JSON file."""
-    with pytest.raises(pytest.raises(argparse.ArgumentTypeError, match="File not found")):
+    with pytest.raises(argparse.ArgumentTypeError, match="File not found"):
         rit.read_json("non_existent_file.json")
 
 
@@ -80,7 +83,7 @@ def test_read_json_invalid_format(tmp_path):
     """Test reading an invalid JSON file."""
     p = tmp_path / "invalid.json"
     p.write_text("this is not json")
-    with pytest.raises(pytest.raises(argparse.ArgumentTypeError, match="Invalid JSON")):
+    with pytest.raises(argparse.ArgumentTypeError, match="Invalid JSON"):
         rit.read_json(str(p))
 
 
@@ -105,10 +108,13 @@ def test_export_to_csv(tmp_path):
 
 # --- CLI Command Tests ---
 
+
 def test_main_list_command(mocker, mock_api):
     """Test the 'list' command."""
     mocker.patch("sys.argv", ["reverb_inventory_tool.py", "list"])
-    mocker.patch("reverb_inventory_tool.load_config", return_value={"api_token": "fake_token"})
+    mocker.patch(
+        "reverb_inventory_tool.load_config", return_value={"api_token": "fake_token"}
+    )
 
     rit.main()
 
@@ -123,7 +129,9 @@ def test_main_update_command(mocker, tmp_path, mock_api):
     p.write_text(json.dumps(json_content))
 
     mocker.patch("sys.argv", ["reverb_inventory_tool.py", "update", "--file", str(p)])
-    mocker.patch("reverb_inventory_tool.load_config", return_value={"api_token": "fake_token"})
+    mocker.patch(
+        "reverb_inventory_tool.load_config", return_value={"api_token": "fake_token"}
+    )
 
     rit.main()
 
@@ -138,7 +146,17 @@ def test_main_export_command(mocker, tmp_path):
     input_file.write_text(json.dumps(json_content))
     output_file = tmp_path / "output.csv"
 
-    mocker.patch("sys.argv", ["reverb_inventory_tool.py", "export", "--input-file", str(input_file), "--output-file", str(output_file)])
+    mocker.patch(
+        "sys.argv",
+        [
+            "reverb_inventory_tool.py",
+            "export",
+            "--input-file",
+            str(input_file),
+            "--output-file",
+            str(output_file),
+        ],
+    )
 
     # Mock the export function to check if it's called
     mock_export_func = mocker.patch("reverb_inventory_tool.export_to_csv")
@@ -146,5 +164,4 @@ def test_main_export_command(mocker, tmp_path):
     rit.main()
 
     mock_export_func.assert_called_once_with(json_content, str(output_file))
-
 
