@@ -26,8 +26,31 @@ The tool is used from the command line. You can get a list of all available comm
 ```bash
 poetry run python reverb_inventory_tool.py --help
 List ProductsTo list all of your current products on Reverb:poetry run python reverb_inventory_tool.py list
-Create a ProductTo create a new product, you'll need to provide the path to a CSV file with the product information:poetry run python reverb_inventory_tool.py create --file /path/to/your/products.csv
-Update a ProductTo update existing products, you'll also use a CSV file. The file should contain the sku of the products you want to update, along with the fields that need to be changed.poetry run python reverb_inventory_tool.py update --file /path/to/your/products.csv
-Updating ImagesYou can also update product images using the update command. To do this, add columns to your CSV file with the headers product_image_1, product_image_2, and so on. The value in each of these columns should be a publicly accessible URL to the image.Example CSV for updating images:sku,product_image_1,product_image_2
-REV-123,[https://your-image-host.com/image1.jpg,https://your-image-host.com/image2.jpg](https://your-image-host.com/image1.jpg,https://your-image-host.com/image2.jpg)
+Create ProductsTo create new products, you'll need to provide the path to a JSON file containing an array of product objects.poetry run python reverb_inventory_tool.py create --file /path/to/your/products.json
+Update ProductsTo update existing products, you'll also use a JSON file. The file should contain an array of product objects. Each object must have a sku key, along with any other fields that need to be updated.poetry run python reverb_inventory_tool.py update --file /path/to/your/products.json
+Export to CSVTo convert a JSON product file back to a CSV format, use the export command.poetry run python reverb_inventory_tool.py export --input-file /path/to/products.json --output-file /path/to/output.csv
+TestingThis project uses pytest for unit testing. To run the tests, first ensure you have installed the development dependencies:poetry install
+Then, run the test suite from your terminal:poetry run pytest
+Example JSON for Creating/Updating ProductsYour JSON file should contain a list of products. For updates, ensure the sku is present. For image updates, use the photos key with an array of image URLs.[
+  {
+    "sku": "REV-123-UPDATE",
+    "title": "Updated Vintage Pedal",
+    "price": "199.99",
+    "photos": [
+      "[https://your-image-host.com/image1-updated.jpg](https://your-image-host.com/image1-updated.jpg)",
+      "[https://your-image-host.com/image2-updated.jpg](https://your-image-host.com/image2-updated.jpg)"
+    ]
+  },
+  {
+    "new_listing": "true",
+    "title": "Brand New Guitar",
+    "make": "AwesomeGuitars",
+    "model": "ShredMaster 5000",
+    "price": "1299.00",
+    "condition": "Brand New",
+    "photos": [
+      "[https://your-image-host.com/shredmaster1.jpg](https://your-image-host.com/shredmaster1.jpg)"
+    ]
+  }
+]
 

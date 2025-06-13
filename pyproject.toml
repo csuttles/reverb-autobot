@@ -14,8 +14,9 @@ ipython = "^8.22.2"
 isort = "^5.13.2"
 black = "^24.3.0"
 flake8 = "^7.0.0"
-pytest = "^8.1.1"
 pylint = "^3.1.0"
+pytest = "^8.1.1"
+pytest-mock = "^3.12.0"
 mypy = "^1.9.0"
 
 [tool.isort]
@@ -27,3 +28,4 @@ api_token = "5088fe5e45f1994fc6658c175686d30707a9d8d39e86eab1e967ccff9bcf6919" #
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+

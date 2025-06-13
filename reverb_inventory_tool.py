@@ -54,7 +54,8 @@ class ReverbAPI:
             requests.exceptions.RequestException: For network-related errors.
             ValueError: If the API returns an error.
         """
-        url = f"[https://api.reverb.com/api/](https://api.reverb.com/api/){endpoint}"
+        # Correctly construct the URL without any markdown formatting.
+        url = f"https://api.reverb.com/api/{endpoint}"
         try:
             response = requests.request(
                 method,
@@ -115,13 +116,62 @@ def load_config() -> Dict[str, Any]:
         raise RuntimeError("Could not find configuration in pyproject.toml.") from e
 
 
-def read_csv(file_path: str) -> List[Dict[str, Any]]:
-    """Reads a CSV file and returns a list of dictionaries."""
+def read_json(file_path: str) -> List[Dict[str, Any]]:
+    """Reads a JSON file and returns a list of dictionaries."""
     try:
-        with open(file_path, "r", encoding="utf-8") as csvfile:
-            return list(csv.DictReader(csvfile))
+        with open(file_path, "r", encoding="utf-8") as jsonfile:
+            data = json.load(jsonfile)
+            if not isinstance(data, list):
+                raise argparse.ArgumentTypeError(
+                    f"JSON file must contain a list of products. Found {type(data)}."
+                )
+            return data
     except FileNotFoundError as e:
         raise argparse.ArgumentTypeError(f"File not found: {file_path}") from e
+    except json.JSONDecodeError as e:
+        raise argparse.ArgumentTypeError(f"Invalid JSON in file: {file_path}") from e
+
+
+def export_to_csv(products: List[Dict[str, Any]], output_file_path: str):
+    """
+    Exports a list of product dictionaries to a CSV file.
+
+    Args:
+        products: A list of product data.
+        output_file_path: The path to the output CSV file.
+    """
+    if not products:
+        print("No products to export.")
+        return
+
+    processed_products = []
+    all_headers = set()
+
+    for product in products:
+        # Make a copy to avoid modifying the original list
+        processed_product = product.copy()
+
+        # Flatten photos into separate columns
+        if "photos" in processed_product and isinstance(
+            processed_product["photos"], list
+        ):
+            photos = processed_product.pop("photos")
+            for i, photo_url in enumerate(photos, 1):
+                processed_product[f"product_image_{i}"] = photo_url
+
+        processed_products.append(processed_product)
+        all_headers.update(processed_product.keys())
+
+    try:
+        with open(output_file_path, "w", newline="", encoding="utf-8") as csvfile:
+            # Sort headers for consistent column order
+            fieldnames = sorted(list(all_headers))
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(processed_products)
+        print(f"Successfully exported data to {output_file_path}")
+    except IOError as e:
+        print(f"Error writing to file {output_file_path}: {e}")
 
 
 def main():
@@ -135,22 +185,43 @@ def main():
     subparsers.add_parser("list", help="List all products in your inventory.")
 
     create_parser = subparsers.add_parser(
-        "create", help="Create new products from a CSV file."
+        "create", help="Create new products from a JSON file."
     )
     create_parser.add_argument(
-        "-f", "--file", required=True, type=read_csv, help="Path to the CSV file."
+        "-f", "--file", required=True, type=read_json, help="Path to the JSON file."
     )
 
     update_parser = subparsers.add_parser(
-        "update", help="Update existing products from a CSV file."
+        "update", help="Update existing products from a JSON file."
     )
     update_parser.add_argument(
-        "-f", "--file", required=True, type=read_csv, help="Path to the CSV file."
+        "-f", "--file", required=True, type=read_json, help="Path to the JSON file."
+    )
+
+    export_parser = subparsers.add_parser(
+        "export", help="Export a JSON file to a CSV file."
+    )
+    export_parser.add_argument(
+        "-i",
+        "--input-file",
+        required=True,
+        type=read_json,
+        help="Path to the input JSON file.",
+    )
+    export_parser.add_argument(
+        "-o",
+        "--output-file",
+        required=True,
+        help="Path for the output CSV file.",
     )
 
     args = parser.parse_args()
 
     try:
+        if args.command == "export":
+            export_to_csv(args.input_file, args.output_file)
+            return
+
         config = load_config()
         api = ReverbAPI(config["api_token"])
 
@@ -169,16 +240,6 @@ def main():
                 if not sku:
                     print("SKU is required for updating a product.")
                     continue
-
-                photos = [
-                    product.pop(key)
-                    for key in list(product.keys())
-                    if key.startswith("product_image_") and product[key]
-                ]
-
-                if photos:
-                    product["photos"] = photos
-
                 updated_product = api.update_product(sku, product)
                 print(f"Updated product: {updated_product.get('title')}")
 
