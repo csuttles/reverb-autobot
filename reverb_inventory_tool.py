@@ -15,8 +15,6 @@ import toml
 class ReverbAPI:
     """A wrapper for the Reverb API."""
 
-    BASE_URL = "[https://api.reverb.com/api](https://api.reverb.com/api)"
-
     def __init__(self, api_token: str):
         """
         Initializes the ReverbAPI client.
@@ -56,7 +54,7 @@ class ReverbAPI:
             requests.exceptions.RequestException: For network-related errors.
             ValueError: If the API returns an error.
         """
-        url = f"{self.BASE_URL}/{endpoint}"
+        url = f"[https://api.reverb.com/api/](https://api.reverb.com/api/){endpoint}"
         try:
             response = requests.request(
                 method,
@@ -114,9 +112,7 @@ def load_config() -> Dict[str, Any]:
     try:
         return toml.load("pyproject.toml")["tool"]["reverb_inventory_tool"]
     except (FileNotFoundError, KeyError) as e:
-        raise RuntimeError(
-            "Could not find configuration in pyproject.toml."
-        ) from e
+        raise RuntimeError("Could not find configuration in pyproject.toml.") from e
 
 
 def read_csv(file_path: str) -> List[Dict[str, Any]]:
@@ -136,31 +132,20 @@ def main():
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # List command
     subparsers.add_parser("list", help="List all products in your inventory.")
 
-    # Create command
     create_parser = subparsers.add_parser(
         "create", help="Create new products from a CSV file."
     )
     create_parser.add_argument(
-        "-f",
-        "--file",
-        required=True,
-        type=read_csv,
-        help="Path to the CSV file with new products.",
+        "-f", "--file", required=True, type=read_csv, help="Path to the CSV file."
     )
 
-    # Update command
     update_parser = subparsers.add_parser(
         "update", help="Update existing products from a CSV file."
     )
     update_parser.add_argument(
-        "-f",
-        "--file",
-        required=True,
-        type=read_csv,
-        help="Path to the CSV file with product updates.",
+        "-f", "--file", required=True, type=read_csv, help="Path to the CSV file."
     )
 
     args = parser.parse_args()
@@ -184,6 +169,16 @@ def main():
                 if not sku:
                     print("SKU is required for updating a product.")
                     continue
+
+                photos = [
+                    product.pop(key)
+                    for key in list(product.keys())
+                    if key.startswith("product_image_") and product[key]
+                ]
+
+                if photos:
+                    product["photos"] = photos
+
                 updated_product = api.update_product(sku, product)
                 print(f"Updated product: {updated_product.get('title')}")
 
@@ -193,3 +188,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

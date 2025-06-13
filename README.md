@@ -28,4 +28,6 @@ poetry run python reverb_inventory_tool.py --help
 List ProductsTo list all of your current products on Reverb:poetry run python reverb_inventory_tool.py list
 Create a ProductTo create a new product, you'll need to provide the path to a CSV file with the product information:poetry run python reverb_inventory_tool.py create --file /path/to/your/products.csv
 Update a ProductTo update existing products, you'll also use a CSV file. The file should contain the sku of the products you want to update, along with the fields that need to be changed.poetry run python reverb_inventory_tool.py update --file /path/to/your/products.csv
+Updating ImagesYou can also update product images using the update command. To do this, add columns to your CSV file with the headers product_image_1, product_image_2, and so on. The value in each of these columns should be a publicly accessible URL to the image.Example CSV for updating images:sku,product_image_1,product_image_2
+REV-123,[https://your-image-host.com/image1.jpg,https://your-image-host.com/image2.jpg](https://your-image-host.com/image1.jpg,https://your-image-host.com/image2.jpg)
 
